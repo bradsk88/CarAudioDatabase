@@ -56,12 +56,12 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_, err = json.MarshalIndent(fr, "", "\t")
+	res, err := json.MarshalIndent(fr, "", "\t")
 	if err != nil {
 		w.WriteHeader(500)
 		return
 	}
-	//fmt.Println(string(res))
+	fmt.Println(string(res))
 }
 
 func captureData(file multipart.File) ([]DataPoint, error) {

@@ -9,7 +9,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	fs := http.FileServer(http.Dir("../car-audio-database/dist/car-audio-database"))
+	fs := http.FileServer(http.Dir("./car-audio-database/dist/car-audio-database"))
 	mux.Handle("/", fs)
 
 	mux.HandleFunc("/endpoint", func(writer http.ResponseWriter, request *http.Request) {
