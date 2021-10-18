@@ -1,9 +1,11 @@
-package main
+package frequency
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
+	model "github.com/bradsk88/CarAudioDatabase/server/model/frequency"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -11,63 +13,73 @@ import (
 	"strings"
 )
 
-type DataPoint struct {
-	Frequency float64
-	Amplitude float64
-	Phase     float64
+type Creator interface {
+	Create(
+		ctx context.Context, createdByUserId string, data []byte,
+	) error
 }
 
-func uploadFile(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("File Upload Endpoint Hit")
+func NewUpload(
+	creator Creator,
+) *Upload {
+	return &Upload{
+		creator: creator,
+	}
+}
 
+type Upload struct {
+	creator Creator
+}
+
+func (u *Upload) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	// Parse our multipart form, 10 << 20 specifies a maximum
 	// upload of 10 MB files.
-	err := r.ParseMultipartForm(10 << 20)
+	err := request.ParseMultipartForm(10 << 20)
 	if err != nil {
-		fmt.Println(err.Error())
-		w.WriteHeader(500)
+		log.Printf("req.ParseMultipartForm: %s", err)
+		writer.WriteHeader(500)
 	}
 
-	// FormFile returns the first file for the given key `myFile`
-	// it also returns the FileHeader so we can get the Filename,
-	// the Header and the size of the file
-	file, handler, err := r.FormFile("file")
+	file, _, err := request.FormFile("file")
 	if err != nil {
-		fmt.Println("Error Retrieving the File")
-		fmt.Println(err)
+		log.Printf("request.FormFile: %s", err)
 		return
 	}
 	defer func() {
 		err := file.Close()
 		if err != nil {
-			w.WriteHeader(500)
+			writer.WriteHeader(500)
+			log.Printf("file.Close: %s", err)
 		}
 	}()
-	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
-	fmt.Printf("File Size: %+v\n", handler.Size)
-	fmt.Printf("MIME Header: %+v\n", handler.Header)
 
 	fr, err := captureData(file)
 	if err != nil {
-		w.WriteHeader(400)
-		_, err = w.Write([]byte(fmt.Sprintf("Could not extract data: %s", err.Error())))
+		writer.WriteHeader(400)
+		_, err = writer.Write([]byte(fmt.Sprintf("Could not extract data: %s", err.Error())))
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}
 
-	res, err := json.MarshalIndent(fr, "", "\t")
+	res, err := json.Marshal(fr)
 	if err != nil {
-		w.WriteHeader(500)
+		writer.WriteHeader(500)
 		return
 	}
-	fmt.Println(string(res))
+
+	err = u.creator.Create(request.Context(), "bradsk88", res)
+	if err != nil {
+		log.Printf("Create: %s\n", err.Error())
+		writer.WriteHeader(500)
+		return
+	}
 }
 
-func captureData(file multipart.File) ([]DataPoint, error) {
+func captureData(file multipart.File) ([]model.DataPoint, error) {
 	scanner := bufio.NewScanner(file)
 
-	fr := make([]DataPoint, 0, 20000*5)
+	fr := make([]model.DataPoint, 0, 20000*5)
 	i := 0
 	startRead := false
 
@@ -97,7 +109,7 @@ func captureData(file multipart.File) ([]DataPoint, error) {
 	return fr, nil
 }
 
-func parseLine(line string) (*DataPoint, error) {
+func parseLine(line string) (*model.DataPoint, error) {
 	spl := strings.Split(line, " ")
 	freq, err := strconv.ParseFloat(spl[0], 64)
 	if err != nil {
@@ -111,5 +123,5 @@ func parseLine(line string) (*DataPoint, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse phase: %s", err.Error())
 	}
-	return &DataPoint{Frequency: freq, Amplitude: amp, Phase: phase}, nil
+	return &model.DataPoint{Frequency: freq, Amplitude: amp, Phase: phase}, nil
 }
