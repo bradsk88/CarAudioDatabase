@@ -33,7 +33,7 @@ export class AppComponent {
     const formData = new FormData();
     formData.append('file', this.myForm.get('fileSource')?.value);
 
-    this.http.post('http://localhost:8080/upload', formData)
+    this.http.post('/upload', formData)
       .subscribe(res => {
         console.log(res);
         alert('Uploaded Successfully.');
