@@ -7,7 +7,7 @@ EXPOSE 8080
 WORKDIR /app
 
 COPY go.mod ./
-#COPY go.sum ./
+COPY go.sum ./
 RUN go mod download
 
 COPY car-audio-database/dist ./car-audio-database/dist

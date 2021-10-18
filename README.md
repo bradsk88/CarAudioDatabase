@@ -48,7 +48,21 @@ docker build . --tag bradj.ca/car-audio-db
 ```
 
 ### Run
-To run the server via docker, run from the project root
+To run the server via docker (without DB), run from the project root
 ```shell
 docker run -p 8080:8080 bradj.ca/car-audio-db
+```
+
+#### With Database
+If you want to test features using the database, create a file with the 
+following format:
+```text
+<your db username>
+<your db password>
+<an empty line>
+```
+
+Start the server like so:
+```shell
+docker run -p 8080:8080 -v /the/file/you/just/created:/dbcreds.txt bradj.ca/car-audio-db
 ```
