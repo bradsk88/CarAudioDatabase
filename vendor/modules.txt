@@ -12,3 +12,6 @@ github.com/doug-martin/goqu/v9/sqlgen
 # github.com/go-sql-driver/mysql v1.6.0
 ## explicit; go 1.10
 github.com/go-sql-driver/mysql
+# github.com/google/uuid v1.3.0
+## explicit
+github.com/google/uuid

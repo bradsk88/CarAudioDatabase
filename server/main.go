@@ -14,10 +14,14 @@ func main() {
 	mux.Handle("/", fs)
 
 	reg := registry.NewHTTP()
-	reg.RegisterAll(mux)
+	err := reg.RegisterAll(mux)
+	if err != nil {
+		fmt.Printf("reg.RegisterAll: %s\n", err.Error())
+		return
+	}
 
 	fmt.Println("Serving...")
-	err := http.ListenAndServe(":8080", mux)
+	err = http.ListenAndServe(":8080", mux)
 	if err != nil {
 		fmt.Printf("failed to start server: %s\n", err.Error())
 	}

@@ -2,6 +2,7 @@ package frequency
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -17,58 +18,66 @@ type DataPoint struct {
 	Phase     float64
 }
 
-func NewUpload() *Upload {
-	return &Upload{}
+type Creator interface {
+	Create(
+		ctx context.Context, createdByUserId string, data []byte,
+	) error
+}
+
+func NewUpload(
+	creator Creator,
+) *Upload {
+	return &Upload{
+		creator: creator,
+	}
 }
 
 type Upload struct {
+	creator Creator
 }
 
-func (u Upload) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	fmt.Println("File Upload Endpoint Hit")
-
+func (u *Upload) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	// Parse our multipart form, 10 << 20 specifies a maximum
 	// upload of 10 MB files.
 	err := request.ParseMultipartForm(10 << 20)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Printf("req.ParseMultipartForm: %s", err)
 		writer.WriteHeader(500)
 	}
 
-	// FormFile returns the first file for the given key `myFile`
-	// it also returns the FileHeader so we can get the Filename,
-	// the Header and the size of the file
-	file, handler, err := request.FormFile("file")
+	file, _, err := request.FormFile("file")
 	if err != nil {
-		fmt.Println("Error Retrieving the File")
-		fmt.Println(err)
+		log.Printf("request.FormFile: %s", err)
 		return
 	}
 	defer func() {
 		err := file.Close()
 		if err != nil {
 			writer.WriteHeader(500)
+			log.Printf("file.Close: %s", err)
 		}
 	}()
-	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
-	fmt.Printf("File Size: %+v\n", handler.Size)
-	fmt.Printf("MIME Header: %+v\n", handler.Header)
 
 	fr, err := captureData(file)
 	if err != nil {
 		writer.WriteHeader(400)
 		_, err = writer.Write([]byte(fmt.Sprintf("Could not extract data: %s", err.Error())))
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}
 
-	res, err := json.MarshalIndent(fr, "", "\t")
+	res, err := json.Marshal(fr)
 	if err != nil {
 		writer.WriteHeader(500)
 		return
 	}
-	fmt.Println(string(res))
+
+	err = u.creator.Create(request.Context(), "bradsk88", res)
+	if err != nil {
+		writer.WriteHeader(500)
+		return
+	}
 }
 
 func captureData(file multipart.File) ([]DataPoint, error) {
