@@ -1,4 +1,4 @@
-package main
+package frequency
 
 import (
 	"bufio"
@@ -17,21 +17,28 @@ type DataPoint struct {
 	Phase     float64
 }
 
-func uploadFile(w http.ResponseWriter, r *http.Request) {
+func NewUpload() *Upload {
+	return &Upload{}
+}
+
+type Upload struct {
+}
+
+func (u Upload) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	fmt.Println("File Upload Endpoint Hit")
 
 	// Parse our multipart form, 10 << 20 specifies a maximum
 	// upload of 10 MB files.
-	err := r.ParseMultipartForm(10 << 20)
+	err := request.ParseMultipartForm(10 << 20)
 	if err != nil {
 		fmt.Println(err.Error())
-		w.WriteHeader(500)
+		writer.WriteHeader(500)
 	}
 
 	// FormFile returns the first file for the given key `myFile`
 	// it also returns the FileHeader so we can get the Filename,
 	// the Header and the size of the file
-	file, handler, err := r.FormFile("file")
+	file, handler, err := request.FormFile("file")
 	if err != nil {
 		fmt.Println("Error Retrieving the File")
 		fmt.Println(err)
@@ -40,7 +47,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		err := file.Close()
 		if err != nil {
-			w.WriteHeader(500)
+			writer.WriteHeader(500)
 		}
 	}()
 	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
@@ -49,8 +56,8 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	fr, err := captureData(file)
 	if err != nil {
-		w.WriteHeader(400)
-		_, err = w.Write([]byte(fmt.Sprintf("Could not extract data: %s", err.Error())))
+		writer.WriteHeader(400)
+		_, err = writer.Write([]byte(fmt.Sprintf("Could not extract data: %s", err.Error())))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -58,7 +65,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	res, err := json.MarshalIndent(fr, "", "\t")
 	if err != nil {
-		w.WriteHeader(500)
+		writer.WriteHeader(500)
 		return
 	}
 	fmt.Println(string(res))
