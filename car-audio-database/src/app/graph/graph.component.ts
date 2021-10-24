@@ -17,6 +17,13 @@ export class GraphComponent implements OnInit {
     }],
     xAxis: {
       type: "logarithmic",
+      tickInterval: 0.2,
+      min: 15,
+      max: 22000,
+      tickPositions: [
+        20, 30, 40, 50, 60, 70, 80, 100, 200, 300, 400, 500, 600, 800,
+        1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 10000, 20000,
+      ].map((v) => Math.log10(v))
     }
   };
 
