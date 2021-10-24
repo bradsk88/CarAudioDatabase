@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bradsk88/CarAudioDatabase/server/api/common"
 	model "github.com/bradsk88/CarAudioDatabase/server/model/frequency"
 	"log"
 	"mime/multipart"
@@ -32,6 +33,8 @@ type Upload struct {
 }
 
 func (u *Upload) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	common.EnableCors(writer)
+
 	// Parse our multipart form, 10 << 20 specifies a maximum
 	// upload of 10 MB files.
 	err := request.ParseMultipartForm(10 << 20)

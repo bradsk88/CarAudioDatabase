@@ -3,6 +3,7 @@ package frequency
 import (
 	"context"
 	"encoding/json"
+	"github.com/bradsk88/CarAudioDatabase/server/api/common"
 	model "github.com/bradsk88/CarAudioDatabase/server/model/frequency"
 	"log"
 	"net/http"
@@ -31,6 +32,7 @@ type GetResponse struct {
 }
 
 func (g *Get) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	common.EnableCors(writer)
 	id := "7c2d9cd3-6b6b-412f-be19-8f8e0d57e4cc" // TODO: Get from request
 	data, err := g.getter.Get(request.Context(), id)
 	if err != nil {
