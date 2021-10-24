@@ -22,7 +22,7 @@ func (i *Inserter) Create(
 	id := uuid.New().String()
 
 	in := goqu.Dialect("mysql").Insert(goqu.T("FreqResponse")).Rows(
-		goqu.Record{"id": id, "created_by_user_id": createdByUserId, "data": data},
+		goqu.Record{"id": id, "created_by_user_id": createdByUserId, "data_json": data},
 	)
 
 	insertSQL, _, err := in.ToSQL()

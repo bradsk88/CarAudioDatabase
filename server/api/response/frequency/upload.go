@@ -75,6 +75,7 @@ func (u *Upload) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
 	err = u.creator.Create(request.Context(), "bradsk88", res)
 	if err != nil {
+		log.Printf("Create: %s\n", err.Error())
 		writer.WriteHeader(500)
 		return
 	}
