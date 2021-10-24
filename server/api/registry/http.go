@@ -27,11 +27,7 @@ func (h *HTTP) RegisterAll(mux *http.ServeMux) error {
 		return fmt.Errorf("initialize: %s", err.Error())
 	}
 
-	err = repo.Get(context.Background(), "7c2d9cd3-6b6b-412f-be19-8f8e0d57e4cc")
-	if err != nil {
-		panic(err)
-	}
-
 	mux.Handle("/upload", frequency.NewUpload(repo))
+	mux.Handle("/get", frequency.NewGet(repo))
 	return nil
 }

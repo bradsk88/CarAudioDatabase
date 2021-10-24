@@ -2,7 +2,9 @@ package frequency
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	model "github.com/bradsk88/CarAudioDatabase/server/model/frequency"
 	"github.com/doug-martin/goqu/v9"
 	"log"
 )
@@ -13,10 +15,10 @@ type Getter struct {
 
 func (i *Inserter) Get(
 	ctx context.Context, id string,
-) error {
+) ([]model.DataPoint, error) {
 	conn, err := i.Connection.GetConnection(ctx)
 	if err != nil {
-		return fmt.Errorf("GetConnection: %s", err.Error())
+		return nil, fmt.Errorf("GetConnection: %s", err.Error())
 	}
 
 	in := goqu.Dialect("mysql").
@@ -27,23 +29,28 @@ func (i *Inserter) Get(
 
 	sql, _, err := in.ToSQL()
 	if err != nil {
-		return fmt.Errorf("ToSQL: %s", err.Error())
+		return nil, fmt.Errorf("ToSQL: %s", err.Error())
 	}
 
 	r, err := conn.QueryContext(ctx, sql)
 	if err != nil {
-		return fmt.Errorf("QueryContext: %s", err.Error())
+		return nil, fmt.Errorf("QueryContext: %s", err.Error())
 	}
 
-	var result string
+	var result []byte
 	for r.Next() {
 		err = r.Scan(&result)
 		if err != nil {
-			return fmt.Errorf("scan: %s", err.Error())
+			return nil, fmt.Errorf("scan: %s", err.Error())
 		}
-		log.Println(result)
 		log.Printf("Read %d bytes from FR\n", len(result))
 	}
 
-	return nil
+	var out []model.DataPoint
+	err = json.Unmarshal(result, &out)
+	if err != nil {
+		return nil, fmt.Errorf("Unmarshal: %s", err.Error())
+	}
+
+	return out, nil
 }

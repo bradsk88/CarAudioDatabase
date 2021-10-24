@@ -5,18 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	model "github.com/bradsk88/CarAudioDatabase/server/model/frequency"
 	"log"
 	"mime/multipart"
 	"net/http"
 	"strconv"
 	"strings"
 )
-
-type DataPoint struct {
-	Frequency float64
-	Amplitude float64
-	Phase     float64
-}
 
 type Creator interface {
 	Create(
@@ -81,10 +76,10 @@ func (u *Upload) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func captureData(file multipart.File) ([]DataPoint, error) {
+func captureData(file multipart.File) ([]model.DataPoint, error) {
 	scanner := bufio.NewScanner(file)
 
-	fr := make([]DataPoint, 0, 20000*5)
+	fr := make([]model.DataPoint, 0, 20000*5)
 	i := 0
 	startRead := false
 
@@ -114,7 +109,7 @@ func captureData(file multipart.File) ([]DataPoint, error) {
 	return fr, nil
 }
 
-func parseLine(line string) (*DataPoint, error) {
+func parseLine(line string) (*model.DataPoint, error) {
 	spl := strings.Split(line, " ")
 	freq, err := strconv.ParseFloat(spl[0], 64)
 	if err != nil {
@@ -128,5 +123,5 @@ func parseLine(line string) (*DataPoint, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse phase: %s", err.Error())
 	}
-	return &DataPoint{Frequency: freq, Amplitude: amp, Phase: phase}, nil
+	return &model.DataPoint{Frequency: freq, Amplitude: amp, Phase: phase}, nil
 }
