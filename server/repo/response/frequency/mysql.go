@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
+	"log"
 	"os"
 )
 
@@ -22,11 +23,22 @@ type MySQLAmplitudeRepo struct {
 }
 
 func (m *MySQLAmplitudeRepo) GetConnection(ctx context.Context) (*sql.Conn, error) {
+	if m.conn != nil {
+		err := m.conn.PingContext(ctx)
+		if err != nil {
+			log.Printf("Ping failed: %s", err.Error())
+		} else {
+			return m.conn, nil
+		}
+	}
+
 	c, err := m.db.Conn(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("db.Conn: %s", err.Error())
 	}
-	return c, nil
+	m.conn = c
+
+	return m.conn, nil
 }
 
 func (m *MySQLAmplitudeRepo) Initialize(ctx context.Context) error {
