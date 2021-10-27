@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"fmt"
+	"github.com/bradsk88/CarAudioDatabase/server/api/auth"
 	"github.com/bradsk88/CarAudioDatabase/server/api/response/frequency"
 	frequency2 "github.com/bradsk88/CarAudioDatabase/server/repo/response/frequency"
 	"net/http"
@@ -29,5 +30,7 @@ func (h *HTTP) RegisterAll(mux *http.ServeMux) error {
 
 	mux.Handle("/upload", frequency.NewUpload(repo))
 	mux.Handle("/get", frequency.NewGet(repo))
+	mux.Handle("/google-callback", auth.NewGoogleCallback())
+	mux.Handle("/google-login", auth.NewGoogleLogin())
 	return nil
 }
