@@ -6,6 +6,7 @@ import (
 	"fmt"
 	model "github.com/bradsk88/CarAudioDatabase/server/model/frequency"
 	"github.com/doug-martin/goqu/v9"
+	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
 	"log"
 )
 
@@ -16,12 +17,12 @@ type Getter struct {
 func (i *Inserter) Get(
 	ctx context.Context, id string,
 ) ([]model.DataPoint, error) {
-	conn, err := i.Connection.GetConnection(ctx)
+	conn, db, err := i.Connection.GetConnection(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("GetConnection: %s", err.Error())
 	}
 
-	in := goqu.Dialect("mysql").
+	in := goqu.New("mysql", db).
 		Select("data_json").
 		From(goqu.T("FreqResponse")).
 		Where(goqu.C("id").Eq(id)).

@@ -32,6 +32,8 @@ type GetResponse struct {
 }
 
 func (g *Get) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	log.Printf("Serving %s\n", request.URL)
+
 	common.EnableCors(writer)
 	id := "7c2d9cd3-6b6b-412f-be19-8f8e0d57e4cc" // TODO: Get from request
 	data, err := g.getter.Get(request.Context(), id)

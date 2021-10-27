@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bradsk88/CarAudioDatabase/server/api/common"
+	"github.com/bradsk88/CarAudioDatabase/server/keys"
 	model "github.com/bradsk88/CarAudioDatabase/server/model/frequency"
+	"github.com/gorilla/sessions"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -20,19 +22,21 @@ type Creator interface {
 	) error
 }
 
-func NewUpload(
-	creator Creator,
-) *Upload {
+func NewUpload(creator Creator, sess *sessions.CookieStore) *Upload {
 	return &Upload{
 		creator: creator,
+		sess:    sess,
 	}
 }
 
 type Upload struct {
 	creator Creator
+	sess    *sessions.CookieStore
 }
 
 func (u *Upload) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	fmt.Printf("Serving %s\n", request.URL.Path)
+
 	common.EnableCors(writer)
 
 	// Parse our multipart form, 10 << 20 specifies a maximum
@@ -58,20 +62,42 @@ func (u *Upload) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 
 	fr, err := captureData(file)
 	if err != nil {
+		log.Printf("captureData: %s\n", err.Error())
 		writer.WriteHeader(400)
 		_, err = writer.Write([]byte(fmt.Sprintf("Could not extract data: %s", err.Error())))
 		if err != nil {
-			log.Println(err)
+			log.Printf("Write: %s\n", err.Error())
 		}
 	}
 
 	res, err := json.Marshal(fr)
 	if err != nil {
 		writer.WriteHeader(500)
+		log.Printf("json.Marshal: %s\n", err.Error())
 		return
 	}
 
-	err = u.creator.Create(request.Context(), "bradsk88", res)
+	// TODO: Extract "get session user ID" to a reusable service
+	session, err := u.sess.Get(request, keys.SessionName)
+	if err != nil {
+		writer.WriteHeader(500)
+		log.Printf("sess.Get: %s\n", err.Error())
+		return
+	}
+
+	_userID, ok := session.Values[keys.SessionKeyUserID]
+	if !ok {
+		writer.WriteHeader(401)
+		return
+	}
+	userID, ok := _userID.(string)
+	if !ok {
+		writer.WriteHeader(500)
+		log.Printf("userID not string")
+		return
+	}
+
+	err = u.creator.Create(request.Context(), userID, res)
 	if err != nil {
 		log.Printf("Create: %s\n", err.Error())
 		writer.WriteHeader(500)

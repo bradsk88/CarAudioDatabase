@@ -3,31 +3,42 @@ package registry
 import (
 	"context"
 	"fmt"
+	"github.com/bradsk88/CarAudioDatabase/server/api/auth"
 	"github.com/bradsk88/CarAudioDatabase/server/api/response/frequency"
 	frequency2 "github.com/bradsk88/CarAudioDatabase/server/repo/response/frequency"
+	"github.com/bradsk88/CarAudioDatabase/server/repo/users"
+	"github.com/gorilla/sessions"
 	"net/http"
 )
 
-func NewHTTP() *HTTP {
-	return &HTTP{}
+func NewHTTP(ipAddr string) *HTTP {
+	return &HTTP{
+		ipAddr: ipAddr,
+	}
 }
 
 type HTTP struct {
+	ipAddr string
 }
 
-func (h *HTTP) RegisterAll(mux *http.ServeMux) error {
-	mux.HandleFunc("/db/endpoint", func(writer http.ResponseWriter, request *http.Request) {
-		writer.Write([]byte("test passed"))
-	})
+func (h *HTTP) RegisterAll(mux *http.ServeMux, sess *sessions.CookieStore) error {
+	frRepo := frequency2.NewMySQLAmplitudeRepo()
 
-	repo := frequency2.NewMySQLAmplitudeRepo()
-
-	err := repo.Initialize(context.Background())
+	err := frRepo.Initialize(context.Background())
 	if err != nil {
-		return fmt.Errorf("initialize: %s", err.Error())
+		return fmt.Errorf("frRepo.initialize: %s", err.Error())
 	}
 
-	mux.Handle("/upload", frequency.NewUpload(repo))
-	mux.Handle("/get", frequency.NewGet(repo))
+	userRepo := users.NewRepo()
+
+	err = userRepo.Initialize(context.Background())
+	if err != nil {
+		return fmt.Errorf("userRepo.initialize: %s", err.Error())
+	}
+
+	mux.Handle("/upload", frequency.NewUpload(frRepo, sess))
+	mux.Handle("/get", frequency.NewGet(frRepo))
+	mux.Handle("/google-callback", auth.NewGoogleCallback(sess, userRepo))
+	mux.Handle("/google-login", auth.NewGoogleLogin())
 	return nil
 }

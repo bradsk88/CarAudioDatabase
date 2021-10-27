@@ -1,6 +1,6 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, Inject, OnInit} from '@angular/core';
 import * as Highcharts from 'highcharts';
-import {XAxisOptions} from "highcharts";
+import {DOCUMENT} from "@angular/common";
 
 @Component({
   selector: 'app-graph',
@@ -37,11 +37,14 @@ export class GraphComponent implements OnInit {
     },
   ];
 
-  constructor() {
+  constructor(
+    @Inject(DOCUMENT) private document: Document,
+  ) {
   }
 
   ngOnInit(): void {
-    fetch('http://190.92.153.141:8080/get').
+    const ip: string = (this.document as any)['carAVServerIP'];
+    fetch(`http://${ip}:8080/get`).
     then((v: Response) => v.json()).
     then((v: {data: any[]}) => this.chartOptions = {
       series: [{

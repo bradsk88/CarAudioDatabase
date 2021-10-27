@@ -18,27 +18,28 @@ func NewMySQLAmplitudeRepo() *MySQLAmplitudeRepo {
 
 type MySQLAmplitudeRepo struct {
 	*Inserter
-	conn *sql.Conn
-	db   *sql.DB
+	ipAddr string
+	conn   *sql.Conn
+	db     *sql.DB
 }
 
-func (m *MySQLAmplitudeRepo) GetConnection(ctx context.Context) (*sql.Conn, error) {
+func (m *MySQLAmplitudeRepo) GetConnection(ctx context.Context) (*sql.Conn, *sql.DB, error) {
 	if m.conn != nil {
 		err := m.conn.PingContext(ctx)
 		if err != nil {
 			log.Printf("Ping failed: %s", err.Error())
 		} else {
-			return m.conn, nil
+			return m.conn, nil, nil
 		}
 	}
 
 	c, err := m.db.Conn(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("db.Conn: %s", err.Error())
+		return nil, nil, fmt.Errorf("db.Conn: %s", err.Error())
 	}
 	m.conn = c
 
-	return m.conn, nil
+	return m.conn, m.db, nil
 }
 
 func (m *MySQLAmplitudeRepo) Initialize(ctx context.Context) error {
