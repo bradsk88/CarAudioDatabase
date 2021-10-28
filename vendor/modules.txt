@@ -33,6 +33,12 @@ github.com/google/uuid
 github.com/googleapis/gax-go/v2
 github.com/googleapis/gax-go/v2/apierror
 github.com/googleapis/gax-go/v2/apierror/internal/proto
+# github.com/gorilla/securecookie v1.1.1
+## explicit
+github.com/gorilla/securecookie
+# github.com/gorilla/sessions v1.2.1
+## explicit
+github.com/gorilla/sessions
 # go.opencensus.io v0.23.0
 ## explicit; go 1.13
 go.opencensus.io

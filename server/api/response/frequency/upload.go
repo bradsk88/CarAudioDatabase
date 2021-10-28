@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/bradsk88/CarAudioDatabase/server/api/common"
 	model "github.com/bradsk88/CarAudioDatabase/server/model/frequency"
+	"github.com/gorilla/sessions"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -20,9 +21,7 @@ type Creator interface {
 	) error
 }
 
-func NewUpload(
-	creator Creator,
-) *Upload {
+func NewUpload(creator Creator, sess *sessions.CookieStore) *Upload {
 	return &Upload{
 		creator: creator,
 	}

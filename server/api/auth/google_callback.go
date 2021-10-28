@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/gorilla/sessions"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/oauth2/v2"
 	"google.golang.org/api/option"
@@ -10,23 +11,32 @@ import (
 	"net/http"
 )
 
-func NewGoogleCallback() *GoogleCallback {
-	return &GoogleCallback{}
+func NewGoogleCallback(sess *sessions.CookieStore) *GoogleCallback {
+	return &GoogleCallback{
+		sess: sess,
+	}
 }
 
 type GoogleCallback struct {
+	sess *sessions.CookieStore
 }
 
 func (g *GoogleCallback) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	session, _ := g.sess.Get(request, "caravdb-session")
+
 	b, err := ioutil.ReadFile("/credentials.json")
 	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
+		log.Printf("Unable to read client secret file: %v", err)
+		writer.WriteHeader(500)
+		return
 	}
 
 	// If modifying these scopes, delete your previously saved token.json.
 	config, err := google.ConfigFromJSON(b, people.UserinfoEmailScope)
 	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
+		log.Printf("Unable to parse client secret file to config: %v", err)
+		writer.WriteHeader(500)
+		return
 	}
 
 	code := request.URL.Query().Get("code")
@@ -36,9 +46,26 @@ func (g *GoogleCallback) ServeHTTP(writer http.ResponseWriter, request *http.Req
 
 	srv, err := oauth2.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
-		log.Fatalf("Unable to create people Client %v", err)
+		log.Printf("Unable to create oauth2 Client %v", err)
+		writer.WriteHeader(500)
+		return
 	}
 
 	r, err := srv.Userinfo.V2.Me.Get().Do()
-	_, _ = writer.Write([]byte(r.Email))
+	if err != nil {
+		log.Printf("Unable to get user info %v", err)
+		writer.WriteHeader(500)
+		return
+	}
+
+	log.Printf("Login successful for %s", r.Email)
+	session.Values["authenticated"] = true
+	session.Values["google_id"] = r.Id
+
+	err = session.Save(request, writer)
+	if err != nil {
+		log.Printf("Failed to save session %v", err)
+		writer.WriteHeader(500)
+		return
+	}
 }

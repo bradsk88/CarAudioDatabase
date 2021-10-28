@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/bradsk88/CarAudioDatabase/server/api/registry"
 	"net/http"
+
+	"github.com/gorilla/sessions"
 )
 
 func main() {
@@ -13,8 +15,11 @@ func main() {
 	fs := http.FileServer(http.Dir("./car-audio-database/dist/car-audio-database"))
 	mux.Handle("/", fs)
 
+	key := []byte("super-secret-key") // TODO: Generate and store
+	store := sessions.NewCookieStore(key)
+
 	reg := registry.NewHTTP()
-	err := reg.RegisterAll(mux)
+	err := reg.RegisterAll(mux, store)
 	if err != nil {
 		fmt.Printf("reg.RegisterAll: %s\n", err.Error())
 		return
