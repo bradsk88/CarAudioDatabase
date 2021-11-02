@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bradsk88/CarAudioDatabase/server/api/auth"
 	"github.com/bradsk88/CarAudioDatabase/server/api/response/frequency"
+	"github.com/bradsk88/CarAudioDatabase/server/api/user/displayname"
 	frequency2 "github.com/bradsk88/CarAudioDatabase/server/repo/response/frequency"
 	"github.com/bradsk88/CarAudioDatabase/server/repo/users"
 	"github.com/gorilla/sessions"
@@ -40,5 +41,6 @@ func (h *HTTP) RegisterAll(mux *http.ServeMux, sess *sessions.CookieStore) error
 	mux.Handle("/get", frequency.NewGet(frRepo))
 	mux.Handle("/google-callback", auth.NewGoogleCallback(sess, userRepo))
 	mux.Handle("/google-login", auth.NewGoogleLogin())
+	mux.Handle("/user/display-name/claim", displayname.NewClaim(sess, userRepo))
 	return nil
 }
