@@ -8,11 +8,15 @@ import {HttpClientModule} from "@angular/common/http";
 import { GraphComponent } from './graph/graph.component';
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {HighchartsChartModule} from "highcharts-angular";
+import { ClaimDisplayNameComponent } from './claim-display-name/claim-display-name.component';
+import { ShowFrequencyResponsesComponent } from './show-frequency-responses/show-frequency-responses.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    GraphComponent
+    GraphComponent,
+    ClaimDisplayNameComponent,
+    ShowFrequencyResponsesComponent
   ],
   imports: [
     BrowserModule,
