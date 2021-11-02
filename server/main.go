@@ -35,9 +35,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fs := http.FileServer(http.Dir("./car-audio-database/dist/car-audio-database"))
-	mux.Handle("/", fs)
-
 	sessionKey, err := getSessionKey()
 	if err != nil {
 		log.Fatalf("getSessionKey: %s", err.Error())
@@ -52,6 +49,9 @@ func main() {
 		fmt.Printf("reg.RegisterAll: %s\n", err.Error())
 		return
 	}
+
+	fs := http.FileServer(http.Dir("./car-audio-database/dist/car-audio-database"))
+	mux.Handle("/", fs)
 
 	fmt.Println("Serving...")
 	err = http.ListenAndServe(":8080", mux)

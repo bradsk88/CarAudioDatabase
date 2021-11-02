@@ -4,8 +4,8 @@ import {ClaimDisplayNameComponent} from "./claim-display-name/claim-display-name
 import {ShowFrequencyResponsesComponent} from "./show-frequency-responses/show-frequency-responses.component";
 
 const routes: Routes = [
-  {path: "", component: ShowFrequencyResponsesComponent},
-  {path: "display-name/claim", component: ClaimDisplayNameComponent}
+  {path: "app", component: ShowFrequencyResponsesComponent},
+  {path: "app/display-name/claim", component: ClaimDisplayNameComponent}
 ];
 
 @NgModule({
