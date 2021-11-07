@@ -50,8 +50,7 @@ func main() {
 		return
 	}
 
-	fs := http.FileServer(http.Dir("./car-audio-database/dist/car-audio-database"))
-	mux.Handle("/", fs)
+	mux.Handle("/content/", http.FileServer(http.Dir("./car-audio-database/dist/car-audio-database")))
 
 	fmt.Println("Serving...")
 	err = http.ListenAndServe(":8080", mux)
